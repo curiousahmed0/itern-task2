@@ -2,14 +2,16 @@ import React, { useState } from "react";
 import Button from "react-bootstrap/Button";
 import Modal from "react-bootstrap/Modal";
 import Form from "react-bootstrap/Form";
+import axios from "axios";
 
 const FormModal = (props) => {
   const [formData, setFormData] = useState({
     title: "",
-    price: 0,
-    lesson: 0,
+    price: "",
+    lesson: "",
     selectedImage: null,
   });
+  const [validated, setValidated] = useState(false);
 
   const handleChange = (e) => {
     const { name, value, type, files } = e.target;
@@ -26,17 +28,43 @@ const FormModal = (props) => {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    console.log(formData);
+    const form = e.currentTarget;
+    if (form.checkValidity() === false) {
+      e.stopPropagation();
+      setValidated(true);
+      return;
+    }
+
+    const data = new FormData();
+    Object.keys(formData).forEach((key) => {
+      data.append(key, formData[key]);
+    });
+
+    try {
+      const response = await axios.post(
+        "https://jsonplaceholder.typicode.com/posts",
+        data,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      console.log(response.data);
+    } catch (error) {
+      console.log(error);
+    }
 
     setFormData({
       title: "",
-      price: 0,
-      lesson: 0,
+      price: "",
+      lesson: "",
       selectedImage: null,
     });
+    setValidated(false);
   };
 
   return (
@@ -52,7 +80,7 @@ const FormModal = (props) => {
         </Modal.Title>
       </Modal.Header>
       <Modal.Body>
-        <Form onSubmit={handleSubmit}>
+        <Form noValidate validated={validated} onSubmit={handleSubmit}>
           <Form.Group className="mb-3" controlId="formBasicEmail">
             <Form.Label>Course Title</Form.Label>
             <Form.Control
@@ -61,7 +89,11 @@ const FormModal = (props) => {
               placeholder="Enter Title"
               value={formData.title}
               onChange={handleChange}
+              required
             />
+            <Form.Control.Feedback type="invalid">
+              Title cannot be empty.
+            </Form.Control.Feedback>
           </Form.Group>
 
           <Form.Group className="mb-3" controlId="formBasicPassword">
@@ -72,7 +104,11 @@ const FormModal = (props) => {
               placeholder="Price"
               value={formData.price}
               onChange={handleChange}
+              required
             />
+            <Form.Control.Feedback type="invalid">
+              Please enter a valid price
+            </Form.Control.Feedback>
           </Form.Group>
           <Form.Group className="mb-3" controlId="formBasicPassword">
             <Form.Label>Total Lessons</Form.Label>
@@ -82,7 +118,11 @@ const FormModal = (props) => {
               placeholder="Total Lessons"
               value={formData.lesson}
               onChange={handleChange}
+              required
             />
+            <Form.Control.Feedback type="invalid">
+              Please enter a valid lesson count
+            </Form.Control.Feedback>
           </Form.Group>
           <Form.Group className="mb-3" controlId="formBasicPassword">
             <Form.Label>Image</Form.Label>
@@ -92,7 +132,11 @@ const FormModal = (props) => {
               placeholder="Total Lessons"
               accept="image/*"
               onChange={handleChange}
+              required
             />
+            <Form.Control.Feedback type="invalid">
+              Please select an image
+            </Form.Control.Feedback>
           </Form.Group>
 
           <Button variant="primary" type="submit">
